@@ -1,4 +1,5 @@
 class ProjectsController < ApplicationController
+  before_action :authenticate_user!
   before_action :set_project_minimal, only: [ :edit, :update, :destroy ]
   before_action :set_project, only: [ :show ]
 
@@ -10,6 +11,46 @@ class ProjectsController < ApplicationController
 
   def show
     authorize @project
+    
+    # Load project owner (creator) with includes to avoid N+1
+    @owner = @project.memberships.includes(:user).where(role: :owner).first&.user
+    
+    # Calculate metrics efficiently
+    @devlogs_count = @project.posts.where(postable_type: "Post::Devlog").count
+    ship_event_ids = @project.posts.where(postable_type: "Post::ShipEvent").pluck(:postable_id).map(&:to_i)
+    @total_hours = ship_event_ids.any? ? Post::ShipEvent.where(id: ship_event_ids).sum(:hours) || 0.0 : 0.0
+    @followers_count = @project.memberships_count
+    @ship_certified = @project.posts.where(postable_type: "Post::ShipEvent").exists?
+    
+    # Format total time as "Xh Ym"
+    hours = @total_hours.to_i
+    minutes = ((@total_hours - hours) * 60).round
+    @total_time_formatted = "#{hours}h #{minutes}m"
+    
+    # Load timeline posts with all necessary associations to avoid N+1
+    @timeline_posts = @project.posts
+      .includes(:user)
+      .order(created_at: :desc)
+      .limit(50)
+    
+    # Preload postable associations and attachments to avoid N+1
+    devlog_posts = @timeline_posts.select { |p| p.postable_type == "Post::Devlog" }
+    if devlog_posts.any?
+      devlog_ids = devlog_posts.map { |p| p.postable_id.to_i }
+      devlogs = Post::Devlog.where(id: devlog_ids).with_attached_attachments.index_by(&:id)
+      devlog_posts.each do |post|
+        post.association(:postable).target = devlogs[post.postable_id.to_i]
+      end
+    end
+    
+    ship_posts = @timeline_posts.select { |p| p.postable_type == "Post::ShipEvent" }
+    if ship_posts.any?
+      ship_event_ids = ship_posts.map { |p| p.postable_id.to_i }
+      ship_events = Post::ShipEvent.where(id: ship_event_ids).index_by(&:id)
+      ship_posts.each do |post|
+        post.association(:postable).target = ship_events[post.postable_id.to_i]
+      end
+    end
   end
 
   def new
@@ -60,7 +101,7 @@ class ProjectsController < ApplicationController
   # These are the same today, but they'll be different tomorrow.
 
   def set_project
-    @project = Project.find(params[:id])
+    @project = Project.with_attached_banner.find(params[:id])
   end
 
   def set_project_minimal

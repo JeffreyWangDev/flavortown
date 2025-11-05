@@ -1,1 +1,16 @@
-// Sassy
+// Configuration
+@use "config/fonts";
+@use "config/variables";
+
+// Layouts
+@use "layouts/base";
+@use "layouts/container";
+
+// Components
+@use "components/alerts";
+@use "components/btn";
+@use "components/input";
+@use "components/card";
+@use "components/sidebar";
+@use "components/project_show";
+@use "components/form";

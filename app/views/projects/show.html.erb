@@ -1,2 +1,145 @@
-<h1>Projects#show</h1>
-<p>Find me in app/views/projects/show.html.erb</p>
+<div class="container">
+  <div class="project-show">
+  <!-- Project Overview Section -->
+  <div class="project-overview">
+    <!-- Banner Image -->
+    <% if @project.banner.attached? %>
+      <div class="project-banner">
+        <%= image_tag @project.banner.variant(:card), alt: "#{@project.title} banner" %>
+      </div>
+    <% end %>
+
+    <!-- Project Header -->
+    <div class="project-header">
+      <h1 class="project-title"><%= @project.title %></h1>
+
+      <!-- Key Metrics -->
+      <div class="project-metrics">
+        <span class="metric">
+          <span class="metric-icon">👤</span>
+          <%= pluralize(@followers_count, 'follower') %>
+        </span>
+        <span class="metric">
+          <span class="metric-icon">🔥</span>
+          <%= pluralize(@devlogs_count, 'devlog') %>
+        </span>
+        <span class="metric">
+          <span class="metric-icon">⏱️</span>
+          <%= @total_time_formatted %>
+        </span>
+        <% if @ship_certified %>
+          <span class="metric metric-highlight">
+            Ship certified
+          </span>
+        <% end %>
+      </div>
+
+      <!-- Creator Information -->
+      <% if @owner %>
+        <div class="project-creator">
+          <span class="creator-icon">👤</span>
+          Created by <%= @owner.display_name || @owner.email %>
+        </div>
+      <% end %>
+
+      <!-- Project Description -->
+      <% if @project.description.present? %>
+        <div class="project-description">
+          <%= md @project.description %>
+        </div>
+      <% end %>
+
+      <!-- Action Buttons -->
+      <div class="project-actions">
+        <% if @project.demo_url.present? %>
+          <%= link_to @project.demo_url, target: "_blank", rel: "noopener noreferrer", class: "action-btn" do %>
+            <span class="btn-icon">▶️</span>
+            Demo
+          <% end %>
+        <% end %>
+        <% if @project.repo_url.present? %>
+          <%= link_to @project.repo_url, target: "_blank", rel: "noopener noreferrer", class: "action-btn" do %>
+            <span class="btn-icon">📁</span>
+            Repository
+          <% end %>
+        <% end %>
+        <% if @project.readme_url.present? %>
+          <%= link_to @project.readme_url, target: "_blank", rel: "noopener noreferrer", class: "action-btn" do %>
+            <span class="btn-icon">📖</span>
+            Readme
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline Section -->
+  <div class="timeline-section">
+    <h2 class="timeline-title">Timeline</h2>
+    <div class="timeline-line"></div>
+
+    <div class="timeline-entries">
+      <% @timeline_posts.each do |post| %>
+        <div class="timeline-entry">
+          <% if post.postable_type == "Post::ShipEvent" %>
+            <% ship_event = post.postable %>
+            <div class="timeline-entry-header">
+              <span class="entry-icon">🚢</span>
+              <span class="entry-title">Ship <%= ship_event&.id %></span>
+            </div>
+            <% if ship_event&.payout %>
+              <div class="timeline-entry-meta">
+                <span class="meta-icon">💰</span>
+                1 payout of <%= number_with_delimiter(ship_event.payout, delimiter: ',') %> shells
+              </div>
+            <% end %>
+            <div class="timeline-entry-footer">
+              <span class="entry-time"><%= time_ago_in_words(post.created_at) %> ago</span>
+              <% if post.user %>
+                <div class="entry-creator">
+                  <span class="creator-avatar">👤</span>
+                  <span><%= post.user.display_name || post.user.email %></span>
+                  <% if ship_event&.hours %>
+                    <span class="entry-summary">Covers <%= pluralize(@devlogs_count, 'devlog') %> and <%= format_hours(ship_event.hours) %></span>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+
+          <% elsif post.postable_type == "Post::Devlog" %>
+            <% devlog = post.postable %>
+            <div class="timeline-entry-header">
+              <% if post.user %>
+                <span class="creator-avatar">👤</span>
+                <span><%= post.user.display_name || post.user.email %></span>
+              <% end %>
+              <span class="entry-time"><%= time_ago_in_words(post.created_at) %> ago</span>
+            </div>
+            <% if devlog&.body.present? %>
+              <div class="timeline-entry-content">
+                <p>
+                  <%= truncate(devlog.body, length: 300) %>
+                  <% if devlog.body.length > 300 %>
+                    <%= link_to "Read more", "#", class: "read-more-link" %>
+                  <% end %>
+                </p>
+              </div>
+            <% end %>
+            <% if devlog&.attachments.attached? %>
+              <div class="timeline-entry-attachments">
+                <% devlog.attachments.each do |attachment| %>
+                  <% if attachment.image? %>
+                    <%= image_tag attachment.variant(:medium), alt: "Devlog attachment", class: "attachment-image" %>
+                  <% elsif attachment.video? %>
+                    <%= video_tag url_for(attachment), controls: true, class: "attachment-video" %>
+                  <% end %>
+                <% end %>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+</div>

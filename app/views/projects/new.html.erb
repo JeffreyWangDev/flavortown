@@ -1,2 +1,120 @@
-<h1>Projects#new</h1>
-<p>Find me in app/views/projects/new.html.erb</p>
+<div class="container">
+  <div class="form-container">
+    <div class="form-header">
+      <h1>New Project</h1>
+      <p>Create a new project to showcase your work</p>
+    </div>
+
+    <% if @project.errors.any? %>
+      <div class="form-errors">
+        <h3><%= pluralize(@project.errors.count, "error") %> prohibited this project from being saved:</h3>
+        <ul>
+          <% @project.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <%= form_with model: @project, local: true, multipart: true, class: "project-form" do |form| %>
+      <div class="form-group">
+        <%= form.label :title, "Title" %>
+        <%= form.text_field :title, class: "form-field", placeholder: "Enter project title" %>
+        <div class="form-help-text">A clear, descriptive title for your project (max 120 characters)</div>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :description, "Description" %>
+        <%= form.text_area :description, class: "form-field form-field--textarea", placeholder: "Describe your project, what it does, and why it's awesome!", rows: 6 %>
+        <div class="form-help-text">Tell us about your project (max 1,000 characters)</div>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :banner, "Banner Image" %>
+        <div class="file-upload-area" id="banner-upload-area">
+          <%= form.file_field :banner, accept: "image/jpeg,image/png,image/webp,image/heic,image/heif", id: "banner-input" %>
+          <div class="file-upload-content">
+            <div class="file-upload-text" id="file-upload-text">
+              Optional<br>
+              <span style="font-size: var(--font-size-s);">Click to upload or drag and drop</span>
+            </div>
+            <img id="banner-preview" class="file-upload-preview" style="display: none;" alt="Banner preview">
+          </div>
+        </div>
+        <div class="form-help-text">Upload a banner image for your project (max 10 MB). Recommended: 1600x900px</div>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :readme_url, "Readme Link" %>
+        <%= form.url_field :readme_url, class: "form-field", placeholder: "https://raw.githubusercontent.com/..." %>
+        <div class="form-help-text">Link to your project's README file</div>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :demo_url, "Demo Link" %>
+        <%= form.url_field :demo_url, class: "form-field", placeholder: "https://your-demo-url.com" %>
+        <div class="form-help-text">Link to a live demo of your project</div>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :repo_url, "Repository Link" %>
+        <%= form.url_field :repo_url, class: "form-field", placeholder: "https://github.com/..." %>
+        <div class="form-help-text">Link to your project's repository</div>
+      </div>
+
+      <div class="form-actions">
+        <%= link_to "Cancel", projects_path, class: "btn btn--red" %>
+        <%= form.submit "Create Project", class: "btn btn--yellow" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+  // Banner image preview
+  document.addEventListener('DOMContentLoaded', function() {
+    const bannerInput = document.getElementById('banner-input');
+    const bannerPreview = document.getElementById('banner-preview');
+    const bannerUploadArea = document.getElementById('banner-upload-area');
+
+    if (bannerInput) {
+      bannerInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            bannerPreview.src = e.target.result;
+            bannerPreview.style.display = 'block';
+            bannerUploadArea.classList.add('has-file');
+            const uploadText = document.getElementById('file-upload-text');
+            if (uploadText) {
+              uploadText.style.display = 'none';
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // Drag and drop
+      bannerUploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        bannerUploadArea.classList.add('dragover');
+      });
+
+      bannerUploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        bannerUploadArea.classList.remove('dragover');
+      });
+
+      bannerUploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        bannerUploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          bannerInput.files = files;
+          bannerInput.dispatchEvent(new Event('change'));
+        }
+      });
+    }
+  });
+</script>
