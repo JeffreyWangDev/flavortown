@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_30_221513) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_01_191218) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -280,6 +280,14 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_221513) do
     t.index ["user_id"], name: "index_shop_orders_on_user_id"
   end
 
+  create_table "user_achievements", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "slug"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id"], name: "index_user_achievements_on_user_id"
+  end
+
   create_table "user_hackatime_projects", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -320,6 +328,9 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_221513) do
     t.datetime "created_at", null: false
     t.string "display_name"
     t.string "email"
+    t.string "hack_club_account_access_token_bidx"
+    t.text "hack_club_account_access_token_ciphertext"
+    t.string "hack_club_account_id"
     t.boolean "has_gotten_free_stickers", default: false
     t.boolean "has_roles", default: true, null: false
     t.string "magic_link_token"
@@ -327,10 +338,12 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_221513) do
     t.integer "projects_count"
     t.string "region"
     t.string "slack_id"
-    t.datetime "synced_at"
     t.datetime "updated_at", null: false
     t.string "verification_status", default: "needs_submission", null: false
     t.integer "votes_count"
+    t.boolean "ysws_verified"
+    t.index ["hack_club_account_access_token_bidx"], name: "index_users_on_hack_club_account_access_token_bidx"
+    t.index ["hack_club_account_id"], name: "index_users_on_hack_club_account_id", unique: true
     t.index ["magic_link_token"], name: "index_users_on_magic_link_token", unique: true
     t.index ["region"], name: "index_users_on_region"
   end
@@ -372,6 +385,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_221513) do
   add_foreign_key "shop_items", "users"
   add_foreign_key "shop_orders", "shop_items"
   add_foreign_key "shop_orders", "users"
+  add_foreign_key "user_achievements", "users"
   add_foreign_key "user_hackatime_projects", "projects"
   add_foreign_key "user_hackatime_projects", "users"
   add_foreign_key "user_identities", "users"
